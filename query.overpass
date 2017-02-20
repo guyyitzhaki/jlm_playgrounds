@@ -1,0 +1,16 @@
+// the original overpass query that generated results.geojson
+
+[out:json][timeout:25];
+// fetch area “Jerusalem” to search in
+{{geocodeArea:Jerusalem}}->.searchArea;
+// gather results
+(
+  // query part for: “tourism=museum”
+  node["leisure"="playground"](area.searchArea);
+  way["leisure"="playground"](area.searchArea);
+  relation["leisure"="playground"](area.searchArea);
+);
+// print results
+out body;
+>;
+out skel qt;
