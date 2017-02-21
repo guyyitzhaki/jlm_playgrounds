@@ -29,7 +29,6 @@
 	<div id="map"></div>
 
 	<script src="https://unpkg.com/@turf/turf@3.5.2/turf.min.js"></script>
-	<script src="http://d3js.org/topojson.v1.min.js"></script>
 	<script src='//api.tiles.mapbox.com/mapbox.js/plugins/leaflet-omnivore/v0.3.1/leaflet-omnivore.min.js'></script>
 	<script src="Leaflet.MakiMarkers.js"></script>
 
@@ -57,18 +56,17 @@
 
 		function eachLayer(layer) {
 		    var feature = layer.toGeoJSON();
-				console.log(feature);//.properties);
-				// if (feature.properties.name) {
-        //     layer.bindPopup(feature.properties.name);
-        // }
+
 				if (feature.geometry.type === 'Polygon') {
-					console.log('Polygon detected');
 					var centroid = turf.centroid(feature);
 					var coords = centroid.geometry.coordinates;
 				} else {
 					var coords = feature.geometry.coordinates;
 				}
-				L.marker([coords[1],coords[0]], {icon: icon}).addTo(map);
+
+				var m = L.marker([coords[1],coords[0]], {icon: icon});
+				if (feature.properties.name) m.bindPopup(feature.properties.name);
+				m.addTo(map);
 		}
 
 	  var points = omnivore.topojson('data/results.topojson')
