@@ -65,7 +65,12 @@
 				}
 
 				var m = L.marker([coords[1],coords[0]], {icon: icon});
-				if (feature.properties.name) m.bindPopup(feature.properties.name);
+
+				var waze = "waze://?ll="+coords[1]+","+coords[0];
+				var popup = "<a href=\""+waze+"\">Waze</a>\n";
+				if (feature.properties.name) popup = popup + feature.properties.name;
+				m.bindPopup(popup);
+
 				m.addTo(map);
 		}
 
