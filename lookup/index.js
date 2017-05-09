@@ -26,7 +26,6 @@ function loadPlaygrounds(callback) {
                 client_email: config.service_account_email,
                 private_key: config.service_account_key
             };
-            console.log(creds);
             doc.useServiceAccountAuth(creds, step);
         },
         function getInfoAndWorksheets(step) {
@@ -38,12 +37,12 @@ function loadPlaygrounds(callback) {
             });
         },
         function loadRows(step) {
-            worksheet.getRows({offset: 1}, (err, rows) => {
+            worksheet.getRows({offset: 1, limit: 10}, (err, rows) => {
                 console.log(`Read ${rows.length} rows`);
                 rows = _.filter(rows, row => row['addressdescription'].length > 0);
                 console.log(`${rows.length} non empty rows`);
                 _.each(rows, (row, index) => {
-                    playgrounds.push({name: row['name'], address: row['addressdescription'], neighborhood: row['neighborhood'], id: index});
+                    playgrounds.push({name: row['name'], address: row['addressdescription'], neighborhood: row['neighborhood'], id: index, row: row});
                 });
                 step();
             });
@@ -55,9 +54,11 @@ function loadPlaygrounds(callback) {
 }
 
 function lookupAddresses(callback) {
-    console.log('looking up');
     var geo = geocoder(geocode_options);
-    async.forEachLimit(playgrounds, 10, function(playground, step) {
+    console.log(playgrounds[0].lat);
+    var pending = _.filter(playgrounds, playground => !playground.lat);
+    console.log(`pending rows: ${pending.length}`);
+    async.forEachLimit(pending, 10, function(playground, step) {
         geo.geocode(cleanAddress(playground.address), function(err, res) {
             if (err) {
                 console.log(`error looking up: ${err}`);
@@ -80,6 +81,17 @@ function lookupAddresses(callback) {
         callback();
     });
 }
+
+function saveResults(callback) {
+    _.each(playgrounds, playground => {
+        playground.row.lat = playground.latitude;
+        playground.row.long = playground.longitude;
+        playground.row.address = playground.formattedAddress;
+        playground.row.save();
+    });
+    callback();
+}
+
 function report(callback) {
     var notGeoCoded = _.filter(playgrounds, playground => !playground.longitude);
     var geoCoded = _.filter(playgrounds, playground => playground.longitude);
@@ -89,7 +101,7 @@ function report(callback) {
 
 function exportGeoJSON(callback) {
     var geoCoded = _.filter(playgrounds, playground => playground.longitude);
-    var json = geoJSON.parse(geoCoded, {Point: ['latitude', 'longitude']});
+    var json = geoJSON.parse(geoCoded, {Point: ['latitude', 'longitude'], exclude:['row']});
     var fname = 'playgrounds.geojson';
     fs.writeFile(fname, 'var playgrounds ='+JSON.stringify(json), err => {
         if(err) {
@@ -109,7 +121,7 @@ function cleanAddress(addr) {
 
 
 
-async.series([loadPlaygrounds, /*lookupAddresses, report, exportGeoJSON*/]);
+async.series([loadPlaygrounds, lookupAddresses, report, saveResults, exportGeoJSON]);
 
 
 
