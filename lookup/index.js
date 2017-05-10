@@ -43,10 +43,7 @@ function loadPlaygrounds(callback) {
                 console.log(`Read ${rows.length} rows`);
                 rows = _.filter(rows, row => row['addressdescription'].length > 0);
                 console.log(`${rows.length} non empty rows`);
-                _.each(rows, (row, index) => {
-                    row.playgroundid = index;
-                    playgrounds.push(row);
-                });
+                _.each(rows, row => playgrounds.push(row));
                 step();
             });
         },
@@ -159,7 +156,7 @@ function report(callback) {
 
 function exportGeoJSON(callback) {
     var geoCoded = _.filter(playgrounds, playground => playground.long);
-    var json = geoJSON.parse(geoCoded, {Point: ['lat', 'long'], include:['playgroundid', 'name', 'neighborhood', 'long', 'lat', 'address', 'addressdescription', 'park', 'playground']});
+    var json = geoJSON.parse(geoCoded, {Point: ['lat', 'long'], include:['id', 'name', 'neighborhood', 'long', 'lat', 'address', 'addressdescription', 'park', 'playground']});
     var filename = 'playgrounds.geojson';
     fs.writeFile(filename, JSON.stringify(json), err => {
         console.log(err ? err : `saved ${filename}`);
