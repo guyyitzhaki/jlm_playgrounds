@@ -51,7 +51,7 @@
 				m.addTo(map);
 			}
 		}
-		$.getJSON("playgrounds.geojson", function(playgrounds) {
+		$.getJSON("playgrounds.geo.json", function(playgrounds) {
    			L.geoJSON(playgrounds, {onEachFeature: onEachFeature});
 		});
 	  	
