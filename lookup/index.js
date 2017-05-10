@@ -18,7 +18,8 @@ var geocode_options = {
 };
 
 var playgrounds = [];
-
+// cache to prevent redundant calls, to preserve the daily google geocoding quota
+var failureCache = [];
 
 function loadPlaygrounds(callback) {
     async.series([
@@ -33,7 +34,7 @@ function loadPlaygrounds(callback) {
             doc.getInfo(function(err, info) {
                 console.log('Loaded doc: '+info.title+' by '+info.author.email);
                 worksheet = _.filter(info.worksheets, sheet => sheet.title === 'database')[0];
-                console.log('sheet 1: '+worksheet.title+' '+worksheet.rowCount+'x'+worksheet.colCount);
+                console.log('sheet: '+worksheet.title+' '+worksheet.rowCount+'x'+worksheet.colCount);
                 step();
             });
         },
@@ -86,6 +87,10 @@ function lookup(cleaner, callback, lookupAll=false) {
     var newlyGeocoded = 0;
     async.forEachLimit(pending, 10, function(playground, step) {
         var cleanAddress = cleaner(playground.addressdescription);
+        if (failureCache.indexOf(cleanAddress) > -1) {
+            step();
+            return;
+        }
         if (lookupAll || cleanAddress != playground.addressdescription) {    
             geo.geocode(cleanAddress + ' ' + config.city, (err, res) => {
                 if (err) {
@@ -95,21 +100,34 @@ function lookup(cleaner, callback, lookupAll=false) {
                 }
                 if (res && res.length > 0) {
                     var geocode = res[0];
+                    if (geocode.extra && geocode.extra.googlePlaceId && config.filteredPlaceIds.indexOf(geocode.extra.googlePlaceId) > -1) {
+                        console.log(`filtering out for ${cleanAddress}, filtered place id`);
+                        failureCache.push(cleanAddress);
+                        step();
+                        return;
+                    }
+                    if (geocode.city && config.allowedCities.indexOf(geocode.city) == -1) {
+                        console.log(`filtering out for ${cleanAddress}, wrong city ${geocode.city}`);
+                        failureCache.push(cleanAddress);
+                        step();
+                        return;
+                    }
                     playground.long = geocode.longitude;
                     playground.lat = geocode.latitude;
                     playground.address = geocode.formattedAddress;
                     playground.locatedaddress = cleanAddress;
                     newlyGeocoded+=1;
-                    console.log(`${playground.name}: ${playground.locatedaddress}`);
+                    //console.log(`${playground.name}: ${playground.locatedaddress}`);
                     playground.save(step);   
                 }
                 else {
+                    failureCache.push(cleanAddress);
                     step();    
                 }
             });
         }
         else {
-            console.log(`skipping ${cleanAddress}, no changes`);
+            //console.log(`skipping ${cleanAddress}, no changes`);
             step();
         }
     }, function(err) {
@@ -141,14 +159,10 @@ function report(callback) {
 
 function exportGeoJSON(callback) {
     var geoCoded = _.filter(playgrounds, playground => playground.long);
-    var json = geoJSON.parse(geoCoded, {Point: ['lat', 'long'], include:['playgroundid', 'name', 'long', 'lat', 'address', 'addressdescription', 'parkplayground']});
-    var fname = 'playgrounds.geojson';
-    fs.writeFile(fname, 'var playgrounds ='+JSON.stringify(json), err => {
-        if(err) {
-            console.log(err);
-            return;
-        }
-        console.log(`saved ${fname}`);
+    var json = geoJSON.parse(geoCoded, {Point: ['lat', 'long'], include:['playgroundid', 'name', 'neighborhood', 'long', 'lat', 'address', 'addressdescription', 'park', 'playground']});
+    var filename = 'playgrounds.geojson';
+    fs.writeFile(filename, JSON.stringify(json), err => {
+        console.log(err ? err : `saved ${filename}`);
         callback();
     });
 }
@@ -183,7 +197,6 @@ function cleanAddressStage5(addr) {
     return addr;
 }
 
-
 function cleanAddressStage6(addr) {
     addr = cleanAddressStage2(addr);
     addr = addr.replace('בית', '');
@@ -207,6 +220,8 @@ async.series([loadPlaygrounds,
     lookupAddresses5, report, 
     lookupAddresses6, report, 
     exportGeoJSON]);
+
+
 
 
 
