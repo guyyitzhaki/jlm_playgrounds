@@ -1,0 +1,23 @@
+@import url(https://fonts.googleapis.com/earlyaccess/alefhebrew.css);
+
+body{
+    font-family: "Alef Hebrew","Helvetica Neue",Helvetica,Arial,sans-serif;
+    padding: 0;
+    margin: 0;
+    background-color: #fff;
+}
+
+html, body, #map {
+        height: 100%;
+    }
+    /* css to customize Leaflet default styles  */
+    .leaflet-popup-tip,
+    .leaflet-popup-content-wrapper {
+        color: #000000;
+        text-align: right;
+    }
+    .leaflet-container {
+        font: 14px/1.5 "Alef Hebrew", "Helvetica Neue", Arial, Helvetica, sans-serif;
+    }
+
+
