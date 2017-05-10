@@ -7,8 +7,9 @@ var fs = require('fs');
 var _ = require('lodash');
 
 // spreadsheet key is the long id in the sheets URL 
-var doc = new GoogleSpreadsheet('1IXlP0P-QSUuTOJ-XopU2CVSmTiqApWoNvwCb0nn6bF4');
+var doc = new GoogleSpreadsheet('1lxfgJTb25hCSATgFzpSYR5pXBhuaevs6nTR0PCyBymk');
 var worksheet;
+var formWorksheet;
 
 var geocode_options = {
     provider: 'google',
@@ -20,6 +21,9 @@ var geocode_options = {
 var playgrounds = [];
 // cache to prevent redundant calls, to preserve the daily google geocoding quota
 var failureCache = [];
+
+var formResponsesById = {};
+var formColumns = [];
 
 function loadPlaygrounds(callback) {
     async.series([
@@ -35,20 +39,38 @@ function loadPlaygrounds(callback) {
                 console.log('Loaded doc: '+info.title+' by '+info.author.email);
                 worksheet = _.filter(info.worksheets, sheet => sheet.title === 'database')[0];
                 console.log('sheet: '+worksheet.title+' '+worksheet.rowCount+'x'+worksheet.colCount);
+                formWorksheet = _.filter(info.worksheets, sheet => sheet.title === 'form-responses')[0];
+                console.log('sheet: '+formWorksheet.title+' '+formWorksheet.rowCount+'x'+formWorksheet.colCount);
                 step();
             });
         },
         function loadRows(step) {
-            worksheet.getRows({offset: 1}, (err, rows) => {
-                console.log(`Read ${rows.length} rows`);
+            worksheet.getRows({offset: 1, limit: 2}, (err, rows) => {
+                console.log(`Read ${rows.length} playgrounds rows`);
                 rows = _.filter(rows, row => row['addressdescription'].length > 0);
                 console.log(`${rows.length} non empty rows`);
                 _.each(rows, row => playgrounds.push(row));
                 step();
             });
         },
+        function loadFormRows(step) {
+            formWorksheet.getRows({offset: 1}, (err, rows) => {
+                console.log(`Read ${rows.length} form response rows`);
+                console.log(`${rows.length} non empty form response rows`);
+                _.each(rows, row => {
+                    if (formResponsesById[rows.id]) {
+                        formResponsesById[rows.id].push(row);
+                    } else {
+                        formResponsesById[rows.id] = [ row ];
+                    }
+                });
+                formColumns = Object.keys(rows[0]).filter(v => ["_xml", "id", "app:edited", "_links", "save", "del", "timestamp"].indexOf(v) === -1);
+                step();
+            });
+        },
         function returnResult(step) {
             callback();
+            step();
         }
     ]);
 }
@@ -77,7 +99,7 @@ function lookupAddresses6(callback) {
     lookup(cleanAddressStage6, callback);
 }
 
-function lookup(cleaner, callback, lookupAll=false) {
+function lookup(cleaner, callback, lookupAll) {
     var geo = geocoder(geocode_options);
     var pending = _.filter(playgrounds, playground => !playground.lat);
     console.log(`pending rows: ${pending.length}`);
@@ -136,17 +158,6 @@ function lookup(cleaner, callback, lookupAll=false) {
     });    
 }
 
-function saveResults(callback) {
-    var modified = _.filter(playgrounds, playground => playground.modified);
-    console.log(`modified:${modified.length}`);
-    async.each(modified, (playground, step) => {
-        console.log(`saving ${playground.name}`);
-        playground.save(step);
-    });
-    console.log('done saving');
-    callback();
-}
-
 function report(callback) {
     var notGeoCoded = _.filter(playgrounds, playground => !playground.long);
     var geoCoded = _.filter(playgrounds, playground => playground.long);
@@ -156,12 +167,12 @@ function report(callback) {
 
 function exportGeoJSON(callback) {
     var geoCoded = _.filter(playgrounds, playground => playground.long);
-    var json = geoJSON.parse(geoCoded, {Point: ['lat', 'long'], include:['id', 'name', 'neighborhood', 'long', 'lat', 'address', 'addressdescription', 'park', 'playground']});
-    var filename = 'playgrounds.geojson';
-    fs.writeFile(filename, JSON.stringify(json), err => {
-        console.log(err ? err : `saved ${filename}`);
-        callback();
-    });
+    var json = geoJSON.parse(geoCoded, {Point: ['lat', 'long'], include:['id', 'name', 'neighborhood', 'long', 'lat', 'address', 'addressdescription', 'park', 'playground'].concat(formColumns)});
+    var filename = 'playgrounds.geo.json';
+    console.log('Writing File...');
+    fs.writeFileSync(filename, JSON.stringify(json));
+    console.log('Done!');
+    callback();
 }
 
 function cleanAddressStage1(addr) {
@@ -215,10 +226,22 @@ async.series([loadPlaygrounds,
     lookupAddresses3, report, 
     lookupAddresses4, report, 
     lookupAddresses5, report, 
-    lookupAddresses6, report, 
+    lookupAddresses6, report,
+    aggregateFormResponses,
     exportGeoJSON]);
 
-
+function aggregateFormResponses(callback) {
+    _.each(playgrounds, playground => {
+        let id = playground.ID;
+        let responses = formResponsesById[id];
+        if (!responses) return;
+        let lastResponse = responses.pop();
+        for (let column of formColumns) {
+            playground[column] = lastResponse[column];
+        }
+    });
+    callback();
+}
 
 
 
