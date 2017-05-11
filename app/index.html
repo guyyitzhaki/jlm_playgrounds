@@ -28,7 +28,7 @@
 		var map = L.map('map', { scrollWheelZoom: true, maxBounds: MAP_BOUNDS}).setView(MAP_CENTER, DEFAULT_ZOOM);
 		//map.locate({setView : true, maxZoom: 13});
 		// tile_url = 'http://{s}.tiles.mapbox.com/v3/niryariv.map-n3zuwkkz/{z}/{x}/{y}.png';
-		var tile_url = "http://niryariv.github.io/israel_tiles/{z}/{x}/{y}.png";
+		var tile_url = "https://niryariv.github.io/israel_tiles/{z}/{x}/{y}.png";
 		L.tileLayer(tile_url, {
 			maxZoom: 16,
 			minZoom: 9
@@ -42,6 +42,14 @@
 		};
 		info.addTo(map);
 
+		var model;
+		$.getJSON("model.json", function(result) {
+			model = result;
+   			$.getJSON("playgrounds.geo.json", function(playgrounds) {
+   				L.geoJSON(playgrounds, {onEachFeature: onEachFeature});
+			});
+		});
+
 		function onEachFeature(feature, layer) {
 			if (feature.geometry.type === 'Point') {
 				var coords = feature.geometry.coordinates;
@@ -51,26 +59,39 @@
 				marker.addTo(map);
 			}
 		}
-		$.getJSON("playgrounds.geo.json", function(playgrounds) {
-   			L.geoJSON(playgrounds, {onEachFeature: onEachFeature});
-		});
 
 		function generatePopup(playground) {
-			var props = [
-				{name:'addressdescription', title:'מיקום', icon: ''},
-				{name:'shadow', title:'צל', icon: '<span class="glyphicon glyphicon-certificate" aria-hidden="true" style="color:#d65d2b"></span>'},
-				{name:'accessbility', title:'נגישות', icon: '<span class="glyphicon glyphicon-warning-sign" aria-hidden="true" style="color:black"></span>'},
-				{name:'facility', title:'מתקנים', icon: ''},
-				{name:'water', title:'מים', icon: ''},
-				{name:'surface', title:'משטח', icon: ''},
-				{name:'age', title:'גילאים', icon: ''}];
-
 			var popupContent = `<h4>${playground.properties.name}</h4><table class="marker-table">`;
-			props.forEach(function(prop) {
-				popupContent += `<tr><td>${prop.icon} ${playground.properties[prop.name]} </td><th>${prop.title}</th></tr>`;
+			model.forEach(function(property) {
+				popupContent += `<tr><td>${getValue(playground, property.name)}</td><th>${property.label}</th></tr>`;	
 			});
 			popupContent += `</table><br><a href="#update">עדכון</a>`;
 			return popupContent;
+		}
+
+		function getValue(playground, propertyName) {
+			var value = playground.properties[propertyName]; 
+			if (value) {
+				var icon = getValueIcon(playground, propertyName, value);
+				if (icon) icon += ' ';
+				return icon + value;
+			}
+			return '<i>אין מידע</i>';
+		}
+
+		function getValueIcon(playground, propertyName, value) {
+			var propertyArr = model.filter(function(prop) {return prop.name === propertyName;});
+			if (propertyArr.length > 0) {
+				var property = propertyArr[0];
+				if (property.icons && property.values) {
+					var index = property.values.split(",").indexOf(value);
+					var valueIcons = property.icons.split(",");
+					if (index < valueIcons.length) {
+						return valueIcons[index];
+					}
+				}
+			}
+			return '';
 		}
 	  	
 	</script>
