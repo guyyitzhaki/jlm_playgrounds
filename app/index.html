@@ -65,8 +65,25 @@
 			model.forEach(function(property) {
 				popupContent += `<tr><td>${getValue(playground, property.name)}</td><th>${property.label}</th></tr>`;	
 			});
-			popupContent += `</table><br><a href="#update">עדכון</a>`;
+			var params = getParams(playground);
+			var url = "https://script.google.com/macros/s/AKfycbyz8kOjdRITW_3P15bI6VS7IclN_ik5u4-_Ntl2uLdT_zXeCwmB/exec?"+params;
+			popupContent += `</table><br><a href="${url}" target="_blank">עדכון</a>`;
 			return popupContent;
+		}
+
+		function getParams(playground) {
+			var params = 'id=' + playground.properties.id;
+			Object.keys(playground.properties).forEach(function(prop) {
+				var propertyArr = model.filter(function(modelprop) {return modelprop.name === prop;});
+				if (propertyArr.length > 0) {
+					var value = playground.properties[prop];
+					if (value) {
+						params += '&' + prop + '=' + value; 
+					}
+				}
+			});
+			console.log(params);
+			return params;
 		}
 
 		function getValue(playground, propertyName) {
