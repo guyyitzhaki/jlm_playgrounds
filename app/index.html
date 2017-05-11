@@ -34,6 +34,14 @@
 			minZoom: 9
 		}).addTo(map);
 
+		var info = L.control();
+		info.onAdd = function (map) {
+			this._div = L.DomUtil.create('div', 'info');
+			this._div.innerHTML = '<h4>גני משחקים בירושלים</h4>';
+			return this._div;
+		};
+		info.addTo(map);
+
 		function onEachFeature(feature, layer) {
 			if (feature.geometry.type === 'Point') {
 				var coords = feature.geometry.coordinates;
