@@ -45,7 +45,7 @@ function loadPlaygrounds(callback) {
             });
         },
         function loadRows(step) {
-            worksheet.getRows({offset: 1, limit: 2}, (err, rows) => {
+            worksheet.getRows({offset: 1, limit: 6}, (err, rows) => {
                 console.log(`Read ${rows.length} playgrounds rows`);
                 rows = _.filter(rows, row => row['addressdescription'].length > 0);
                 console.log(`${rows.length} non empty rows`);
@@ -161,7 +161,7 @@ function lookup(cleaner, callback, lookupAll) {
 function report(callback) {
     var notGeoCoded = _.filter(playgrounds, playground => !playground.long);
     var geoCoded = _.filter(playgrounds, playground => playground.long);
-    console.log(`total: ${playgrounds.length}, geocoded: ${geoCoded.length}, not geocoded: ${notGeoCoded.length} sanity:${notGeoCoded.length + geoCoded.length}` );
+    console.log(`total: ${playgrounds.length}, geocoded: ${geoCoded.length}, not geocoded: ${notGeoCoded.length}`);
     callback();
 }
 
@@ -169,9 +169,9 @@ function exportGeoJSON(callback) {
     var geoCoded = _.filter(playgrounds, playground => playground.long);
     var json = geoJSON.parse(geoCoded, {Point: ['lat', 'long'], include:['id', 'name', 'neighborhood', 'long', 'lat', 'address', 'addressdescription', 'park', 'playground'].concat(formColumns)});
     var filename = 'playgrounds.geo.json';
-    console.log('Writing File...');
+    console.log(`writing file... ${filename}`);
     fs.writeFileSync(filename, JSON.stringify(json));
-    console.log('Done!');
+    console.log('done!');
     callback();
 }
 
@@ -220,16 +220,6 @@ function cleanAddressStage6(addr) {
     return addr;
 }
 
-async.series([loadPlaygrounds, 
-    lookupAddresses1, report, 
-    lookupAddresses2, report, 
-    lookupAddresses3, report, 
-    lookupAddresses4, report, 
-    lookupAddresses5, report, 
-    lookupAddresses6, report,
-    aggregateFormResponses,
-    exportGeoJSON]);
-
 function aggregateFormResponses(callback) {
     _.each(playgrounds, playground => {
         let id = playground.ID;
@@ -242,6 +232,18 @@ function aggregateFormResponses(callback) {
     });
     callback();
 }
+
+async.series([loadPlaygrounds, 
+    lookupAddresses1, report, 
+    lookupAddresses2, report, 
+    lookupAddresses3, report, 
+    lookupAddresses4, report, 
+    lookupAddresses5, report, 
+    lookupAddresses6, report,
+    aggregateFormResponses,
+    exportGeoJSON]);
+
+
 
 
 
