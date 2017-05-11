@@ -5,6 +5,12 @@ var geoJSON = require('geojson');
 var config = require('./config');
 var fs = require('fs');
 var _ = require('lodash');
+const firebase = require('firebase-admin');
+
+let app = firebase.initializeApp({
+    credential: firebase.credential.cert(require('./firebase.credentials.json')),
+    databaseURL: 'https://playgrounds-f2f0d.firebaseio.com'
+});
 
 // spreadsheet key is the long id in the sheets URL 
 var doc = new GoogleSpreadsheet('1lxfgJTb25hCSATgFzpSYR5pXBhuaevs6nTR0PCyBymk');
@@ -187,7 +193,21 @@ function exportGeoJSON(callback) {
     console.log(`writing model file...`);
     fs.writeFileSync('model.json', JSON.stringify(model));
     console.log('done!');
-    callback();
+
+    console.log('Writing to firebase...');
+
+    Promise.all([
+        firebase.database(app).ref('/public/playgrounds').set(JSON.parse(JSON.stringify(json))),
+        firebase.database(app).ref('/public/model').set(JSON.parse(JSON.stringify(model)))
+    ]).then(() => {
+        console.log('Done writing to firebase.');
+        app.delete();
+        callback();
+    }, e => {
+        e && console.error(e);
+        app.delete();
+        callback();
+    });
 }
 
 function cleanAddressStage1(addr) {

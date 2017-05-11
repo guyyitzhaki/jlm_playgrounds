@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "async": "^2.4.0",
+    "firebase-admin": "^4.2.1",
     "geojson": "^0.4.1",
     "google-spreadsheet": "^2.0.3",
     "lodash": "^4.17.4",

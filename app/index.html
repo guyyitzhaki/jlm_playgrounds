@@ -43,12 +43,7 @@
 		info.addTo(map);
 
 		var model;
-		$.getJSON("model.json", function(result) {
-			model = result;
-   			$.getJSON("playgrounds.geo.json", function(playgrounds) {
-   				L.geoJSON(playgrounds, {onEachFeature: onEachFeature});
-			});
-		});
+
 
 		function onEachFeature(feature, layer) {
 			if (feature.geometry.type === 'Point') {
@@ -60,10 +55,15 @@
 			}
 		}
 
+		function jsonp(data) {
+            model = data.model;
+            L.geoJSON(data.playgrounds, {onEachFeature: onEachFeature});
+		}
+
 		function generatePopup(playground) {
 			var popupContent = `<h4>${playground.properties.name}</h4><table class="marker-table">`;
 			model.forEach(function(property) {
-				popupContent += `<tr><td>${getValue(playground, property.name)}</td><th>${property.label}</th></tr>`;	
+				popupContent += `<tr><td>${getValue(playground, property.name)}</td><th>${property.label}</th></tr>`;
 			});
 			var params = getParams(playground);
 			var url = "https://script.google.com/macros/s/AKfycbyz8kOjdRITW_3P15bI6VS7IclN_ik5u4-_Ntl2uLdT_zXeCwmB/exec?"+params;
@@ -78,7 +78,7 @@
 				if (propertyArr.length > 0) {
 					var value = playground.properties[prop];
 					if (value) {
-						params += '&' + prop + '=' + value; 
+						params += '&' + prop + '=' + value;
 					}
 				}
 			});
@@ -87,7 +87,7 @@
 		}
 
 		function getValue(playground, propertyName) {
-			var value = playground.properties[propertyName]; 
+			var value = playground.properties[propertyName];
 			if (value) {
 				var icon = getValueIcon(playground, propertyName, value);
 				if (icon) icon += ' ';
@@ -110,7 +110,8 @@
 			}
 			return '';
 		}
-	  	
+
 	</script>
+	<script src="https://playgrounds-f2f0d.firebaseio.com/public.json?callback=jsonp"></script>
 </body>
 </html>
