@@ -10,6 +10,7 @@ var _ = require('lodash');
 var doc = new GoogleSpreadsheet('1lxfgJTb25hCSATgFzpSYR5pXBhuaevs6nTR0PCyBymk');
 var worksheet;
 var formWorksheet;
+var modelWorksheet;
 
 var geocode_options = {
     provider: 'google',
@@ -24,6 +25,7 @@ var failureCache = [];
 
 var formResponsesById = {};
 var formColumns = [];
+var model = [];
 
 function loadPlaygrounds(callback) {
     async.series([
@@ -41,6 +43,8 @@ function loadPlaygrounds(callback) {
                 console.log('sheet: '+worksheet.title+' '+worksheet.rowCount+'x'+worksheet.colCount);
                 formWorksheet = _.filter(info.worksheets, sheet => sheet.title === 'form-responses')[0];
                 console.log('sheet: '+formWorksheet.title+' '+formWorksheet.rowCount+'x'+formWorksheet.colCount);
+                modelWorksheet = _.filter(info.worksheets, sheet => sheet.title === 'model')[0];
+                console.log('sheet: '+modelWorksheet.title+' '+modelWorksheet.rowCount+'x'+modelWorksheet.colCount);
                 step();
             });
         },
@@ -65,6 +69,16 @@ function loadPlaygrounds(callback) {
                     }
                 });
                 formColumns = Object.keys(rows[0]).filter(v => ["_xml", "id", "app:edited", "_links", "save", "del", "timestamp"].indexOf(v) === -1);
+                step();
+            });
+        },
+        function loadModelRows(step) {
+            modelWorksheet.getRows({offset: 1}, (err, rows) => {
+                console.log(`read ${rows.length} form model rows`);
+
+                _.each(rows, row => {
+                    model.push({name: row['name'], label:row['label'], values: row['values'], icons: row['icons']});    
+                });
                 step();
             });
         },
@@ -171,6 +185,8 @@ function exportGeoJSON(callback) {
     var filename = 'playgrounds.geo.json';
     console.log(`writing file... ${filename}`);
     fs.writeFileSync(filename, JSON.stringify(json));
+    console.log(`writing model file...`);
+    fs.writeFileSync('model.json', JSON.stringify(model));
     console.log('done!');
     callback();
 }
@@ -234,13 +250,13 @@ function aggregateFormResponses(callback) {
 }
 
 async.series([loadPlaygrounds, 
-    lookupAddresses1, report, 
-    lookupAddresses2, report, 
-    lookupAddresses3, report, 
-    lookupAddresses4, report, 
-    lookupAddresses5, report, 
-    lookupAddresses6, report,
-    aggregateFormResponses,
+    // lookupAddresses1, report, 
+    // lookupAddresses2, report, 
+    // lookupAddresses3, report, 
+    // lookupAddresses4, report, 
+    // lookupAddresses5, report, 
+    // lookupAddresses6, report,
+    // aggregateFormResponses,
     exportGeoJSON]);
 
 
