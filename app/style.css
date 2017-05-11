@@ -15,9 +15,36 @@ html, body, #map {
     .leaflet-popup-content-wrapper {
         color: #000000;
         text-align: right;
+        box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    }
+    .leaflet-popup-content {
+        margin: 10px;
+        padding: 10px 10px 15px;
+        line-height: inherit;
     }
     .leaflet-container {
         font: 14px/1.5 "Alef Hebrew", "Helvetica Neue", Arial, Helvetica, sans-serif;
     }
 
+.marker-table {
+    border-collapse: collapse;
+    margin: 0;
+    font-size: 14px;
+    border: 1px solid #eee;
+}
+
+.marker-table tr:nth-child(even) th, .marker-table tr:nth-child(even) td {
+    background-color: #f7f7f7;
+}
+
+.marker-table th {
+    padding: 5px 10px;
+    white-space: nowrap;
+    border: 1px solid #eee;
+}
+
+.marker-table td {
+    padding: 5px 10px;
+    border: 1px solid #eee;
+}
 
