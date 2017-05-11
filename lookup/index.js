@@ -59,13 +59,12 @@ function loadPlaygrounds(callback) {
         },
         function loadFormRows(step) {
             formWorksheet.getRows({offset: 1}, (err, rows) => {
-                console.log(`Read ${rows.length} form response rows`);
                 console.log(`${rows.length} non empty form response rows`);
                 _.each(rows, row => {
-                    if (formResponsesById[rows.id]) {
-                        formResponsesById[rows.id].push(row);
+                    if (formResponsesById[row.id]) {
+                        formResponsesById[row.id].push(row);
                     } else {
-                        formResponsesById[rows.id] = [ row ];
+                        formResponsesById[row.id] = [ row ];
                     }
                 });
                 formColumns = Object.keys(rows[0]).filter(v => ["_xml", "id", "app:edited", "_links", "save", "del", "timestamp"].indexOf(v) === -1);
@@ -238,8 +237,7 @@ function cleanAddressStage6(addr) {
 
 function aggregateFormResponses(callback) {
     _.each(playgrounds, playground => {
-        let id = playground.ID;
-        let responses = formResponsesById[id];
+        let responses = formResponsesById[playground.id];
         if (!responses) return;
         let lastResponse = responses.pop();
         for (let column of formColumns) {
@@ -250,13 +248,13 @@ function aggregateFormResponses(callback) {
 }
 
 async.series([loadPlaygrounds, 
-    // lookupAddresses1, report, 
-    // lookupAddresses2, report, 
-    // lookupAddresses3, report, 
-    // lookupAddresses4, report, 
-    // lookupAddresses5, report, 
-    // lookupAddresses6, report,
-    // aggregateFormResponses,
+    lookupAddresses1, report, 
+    lookupAddresses2, report, 
+    lookupAddresses3, report, 
+    lookupAddresses4, report, 
+    lookupAddresses5, report, 
+    lookupAddresses6, report,
+    aggregateFormResponses,
     exportGeoJSON]);
 
 
