@@ -37,14 +37,7 @@
 			if (feature.geometry.type === 'Point') {
 				var coords = feature.geometry.coordinates;
 				var icon = feature.properties.park === "yes" ? parkIcon : playgroundIcon;
-				var m = L.marker([coords[1], coords[0]], {icon: icon});
-				var popupContento = `<div>
-						<b>${feature.properties.name}</b><hr> 
-						${feature.properties.addressdescription}<br>
-						<span class="glyphicon glyphicon-certificate" aria-hidden="true" style="color:#d65d2b"></span> צל: אין<br>
-						<span class="glyphicon glyphicon-warning-sign" aria-hidden="true" style="color:black"></span> נגישות: אין<br>
-						<br><a href="http://katamon.co.il">עדכון</a>
-					</div>`;
+				var marker = L.marker([coords[1], coords[0]], {icon: icon});
 
 				var popupContent = `<h4>${feature.properties.name}</h4><table class="marker-table">
 					<tr><td>${feature.properties.addressdescription}</td><th>מיקום</th></tr>
@@ -54,9 +47,10 @@
 					<tr><td>${feature.properties.water} </td><th>מים</th></tr>
 					<tr><td>${feature.properties.surface} </td><th>משטח</th></tr>
 					<tr><td>${feature.properties.age} </td><th>גילאים</th></tr>
-					</table><br><a href="http://katamon.co.il">עדכון</a>`;
-				m.bindPopup(popupContent);
-				m.addTo(map);
+					</table><br>
+					<a href="http://katamon.co.il">עדכון</a>`;
+				marker.bindPopup(popupContent);
+				marker.addTo(map);
 			}
 		}
 		$.getJSON("playgrounds.geo.json", function(playgrounds) {
