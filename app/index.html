@@ -19,12 +19,13 @@
 	<script type="text/javascript">
 
 		var MAP_CENTER = [31.77, 35.19];
+		var MAP_BOUNDS = [L.latLng(31.89, 35.14), L.latLng(31.71, 35.27)];
 		var DEFAULT_ZOOM = 13;
 		L.MakiMarkers.accessToken = "pk.eyJ1IjoibmlyeWFyaXYiLCJhIjoiQjdJeWdqZyJ9.pZOwn6stABGoptmp0DH1wg";
 		var playgroundIcon = L.MakiMarkers.icon({icon: "playground", color: "#85AFDF", size: "m"});
 		var parkIcon = L.MakiMarkers.icon({icon: "park", color: "#85AFDF", size: "m"});
-		var map = L.map('map', { scrollWheelZoom: true, maxBounds: [L.latLng(31.89, 35.14), L.latLng(31.71, 35.27)]}).setView(MAP_CENTER, DEFAULT_ZOOM);
 
+		var map = L.map('map', { scrollWheelZoom: true, maxBounds: MAP_BOUNDS}).setView(MAP_CENTER, DEFAULT_ZOOM);
 		//map.locate({setView : true, maxZoom: 13});
 		// tile_url = 'http://{s}.tiles.mapbox.com/v3/niryariv.map-n3zuwkkz/{z}/{x}/{y}.png';
 		var tile_url = "http://niryariv.github.io/israel_tiles/{z}/{x}/{y}.png";
