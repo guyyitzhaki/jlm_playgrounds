@@ -82,7 +82,7 @@ function loadPlaygrounds(callback) {
                 console.log(`read ${rows.length} form model rows`);
 
                 _.each(rows, row => {
-                    model.push({name: row['name'], label:row['label'], values: row['values'], icons: row['icons']});    
+                    model.push({name: row['name'], type: row['type'], label: row['label'], values: row['values'], icons: row['icons']});
                 });
                 step();
             });

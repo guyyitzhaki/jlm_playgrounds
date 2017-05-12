@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>גני שעשועים בירושלים</title>
+	<title>גני משחקים בירושלים</title>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 	<meta name="apple-mobile-web-app-capable" content="yes" />
@@ -43,8 +43,6 @@
 		info.addTo(map);
 
 		var model;
-
-
 		function onEachFeature(feature, layer) {
 			if (feature.geometry.type === 'Point') {
 				var coords = feature.geometry.coordinates;
@@ -72,37 +70,36 @@
 		}
 
 		function getParams(playground) {
-			var params = 'id=' + playground.properties.id;
+			var params = 'id=' + playground.properties.id + '&name='+playground.properties.name;
 			Object.keys(playground.properties).forEach(function(prop) {
 				var propertyArr = model.filter(function(modelprop) {return modelprop.name === prop;});
 				if (propertyArr.length > 0) {
 					var value = playground.properties[prop];
 					if (value) {
-						params += '&' + prop + '=' + value;
+						params += '&' + encodeURIComponent(prop) + '=' + encodeURIComponent(value);
 					}
 				}
 			});
-			console.log(params);
 			return params;
 		}
 
 		function getValue(playground, propertyName) {
 			var value = playground.properties[propertyName];
 			if (value) {
-				var icon = getValueIcon(playground, propertyName, value);
+				var icon = getValueIcon(propertyName, value);
 				if (icon) icon += ' ';
 				return icon + value;
 			}
 			return '<i>אין מידע</i>';
 		}
 
-		function getValueIcon(playground, propertyName, value) {
+		function getValueIcon(propertyName, value) {
 			var propertyArr = model.filter(function(prop) {return prop.name === propertyName;});
 			if (propertyArr.length > 0) {
 				var property = propertyArr[0];
 				if (property.icons && property.values) {
-					var index = property.values.split(",").indexOf(value);
-					var valueIcons = property.icons.split(",");
+					var index = property.values.split(',').indexOf(value);
+					var valueIcons = property.icons.split(',');
 					if (index < valueIcons.length) {
 						return valueIcons[index];
 					}
