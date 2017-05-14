@@ -60,6 +60,7 @@
 
 		function generatePopup(playground) {
 			var popupContent = `<h4>${playground.properties.name}</h4><table class="marker-table">`;
+			popupContent += `<tr><td>${getValue(playground, 'addressdescription')}</td><th>מיקום</th></tr>`;
 			model.forEach(function(property) {
 				popupContent += `<tr><td>${getValue(playground, property.name)}</td><th>${property.label}</th></tr>`;
 			});
