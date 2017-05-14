@@ -26,7 +26,7 @@
 		var parkIcon = L.MakiMarkers.icon({icon: "park", color: "#85AFDF", size: "m"});
 
 		var map = L.map('map', { scrollWheelZoom: true, maxBounds: MAP_BOUNDS}).setView(MAP_CENTER, DEFAULT_ZOOM);
-		map.locate({setView : true, maxZoom: 13});
+		map.locate({setView : true, maxZoom: 15});
 		// tile_url = 'http://{s}.tiles.mapbox.com/v3/niryariv.map-n3zuwkkz/{z}/{x}/{y}.png';
 		var tile_url = "https://niryariv.github.io/israel_tiles/{z}/{x}/{y}.png";
 		L.tileLayer(tile_url, {
