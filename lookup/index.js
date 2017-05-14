@@ -32,6 +32,7 @@ var failureCache = [];
 var formResponsesById = {};
 var formColumns = [];
 var model = [];
+var force = false;
 
 function loadPlaygrounds(callback) {
     async.series([
@@ -80,7 +81,6 @@ function loadPlaygrounds(callback) {
         function loadModelRows(step) {
             modelWorksheet.getRows({offset: 1}, (err, rows) => {
                 console.log(`read ${rows.length} form model rows`);
-
                 _.each(rows, row => {
                     model.push({name: row['name'], type: row['type'], label: row['label'], values: row['values'], icons: row['icons']});
                 });
@@ -129,13 +129,18 @@ function lookup(cleaner, callback, lookupAll) {
             step();
             return;
         }
-        if (lookupAll || cleanAddress != playground.addressdescription) {    
+        if (!force && playground.lastsearchedaddress === playground.addressdescription) {
+            step();
+            return;
+        }
+        if (lookupAll || cleanAddress != playground.addressdescription) {
             geo.geocode(cleanAddress + ' ' + config.city, (err, res) => {
                 if (err) {
                     console.log(`error looking up: ${err}`);
                     step();
                     return;
                 }
+                playground.attempted = true;
                 if (res && res.length > 0) {
                     var geocode = res[0];
                     if (geocode.extra && geocode.extra.googlePlaceId && config.filteredPlaceIds.indexOf(geocode.extra.googlePlaceId) > -1) {
@@ -156,12 +161,14 @@ function lookup(cleaner, callback, lookupAll) {
                     playground.locatedaddress = cleanAddress;
                     newlyGeocoded+=1;
                     //console.log(`${playground.name}: ${playground.locatedaddress}`);
-                    playground.save(step);   
+                    playground.lastsearchedaddress = playground.addressdescription;
+                    playground.save(step);
                 }
                 else {
                     failureCache.push(cleanAddress);
-                    step();    
+                    step();
                 }
+
             });
         }
         else {
@@ -195,7 +202,6 @@ function exportGeoJSON(callback) {
     console.log('done!');
 
     console.log('Writing to firebase...');
-
     Promise.all([
         firebase.database(app).ref('/public/playgrounds').set(JSON.parse(JSON.stringify(json))),
         firebase.database(app).ref('/public/model').set(JSON.parse(JSON.stringify(model)))
@@ -267,6 +273,15 @@ function aggregateFormResponses(callback) {
     callback();
 }
 
+function saveFailedAddresses(callback) {
+    var failed = _.filter(playgrounds, playground => !playground.long && playground.attempted);
+    async.eachLimit(failed, 10, (playground, step) => {
+        playground.lastsearchedaddress = playground.addressdescription;
+        playground.save(step);
+    });
+    callback();
+}
+
 async.series([loadPlaygrounds, 
     lookupAddresses1, report, 
     lookupAddresses2, report, 
@@ -274,6 +289,7 @@ async.series([loadPlaygrounds,
     lookupAddresses4, report, 
     lookupAddresses5, report, 
     lookupAddresses6, report,
+    saveFailedAddresses,
     aggregateFormResponses,
     exportGeoJSON]);
 
