@@ -1,80 +1,114 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>גני שעשועים בירושלים</title>
-
+	<title>גני משחקים בירושלים</title>
+	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 	<meta name="apple-mobile-web-app-capable" content="yes" />
-
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 
- <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
- <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
-
-
-	<style type="text/css">
-		body {
-		    padding: 0;
-		    margin: 0;
-		    background-color: #fff;
-		}
-
-		html, body, #map {
-		    height: 100%;
-		}
-	</style>
-
+ 	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+ 	<script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+	<script src="Leaflet.MakiMarkers.js"></script>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="style.css" />
 </head>
 <body>
 	<div id="map"></div>
-
-	<script src="https://unpkg.com/@turf/turf@3.5.2/turf.min.js"></script>
-	<script src='//api.tiles.mapbox.com/mapbox.js/plugins/leaflet-omnivore/v0.3.1/leaflet-omnivore.min.js'></script>
-	<script src="Leaflet.MakiMarkers.js"></script>
-
 	<script type="text/javascript">
 
 		var MAP_CENTER = [31.77, 35.19];
+		var MAP_BOUNDS = [L.latLng(31.89, 35.14), L.latLng(31.71, 35.27)];
 		var DEFAULT_ZOOM = 13;
-
 		L.MakiMarkers.accessToken = "pk.eyJ1IjoibmlyeWFyaXYiLCJhIjoiQjdJeWdqZyJ9.pZOwn6stABGoptmp0DH1wg";
-		var icon = L.MakiMarkers.icon({icon: "playground", color: "#85AFDF", size: "m"});
+		var playgroundIcon = L.MakiMarkers.icon({icon: "playground", color: "#85AFDF", size: "m"});
+		var parkIcon = L.MakiMarkers.icon({icon: "park", color: "#85AFDF", size: "m"});
 
-		var map = L.map('map', { scrollWheelZoom: true }).setView(MAP_CENTER, DEFAULT_ZOOM);
-
-		// map.locate({setView : true, maxZoom: 13});
-
+		var map = L.map('map', { scrollWheelZoom: true, maxBounds: MAP_BOUNDS}).setView(MAP_CENTER, DEFAULT_ZOOM);
+		//map.locate({setView : true, maxZoom: 13});
 		// tile_url = 'http://{s}.tiles.mapbox.com/v3/niryariv.map-n3zuwkkz/{z}/{x}/{y}.png';
-		tile_url = "http://niryariv.github.io/israel_tiles/{z}/{x}/{y}.png";
-
-
+		var tile_url = "https://niryariv.github.io/israel_tiles/{z}/{x}/{y}.png";
 		L.tileLayer(tile_url, {
 			maxZoom: 16,
 			minZoom: 9
 		}).addTo(map);
 
+		var info = L.control();
+		info.onAdd = function (map) {
+			this._div = L.DomUtil.create('div', 'info');
+			this._div.innerHTML = '<h4>גני משחקים בירושלים</h4>';
+			return this._div;
+		};
+		info.addTo(map);
 
-		function eachLayer(layer) {
-		    var feature = layer.toGeoJSON();
-
-				if (feature.geometry.type === 'Polygon') {
-					var centroid = turf.centroid(feature);
-					var coords = centroid.geometry.coordinates;
-				} else {
-					var coords = feature.geometry.coordinates;
-				}
-
-				var m = L.marker([coords[1],coords[0]], {icon: icon});
-				if (feature.properties.name) m.bindPopup(feature.properties.name);
-				m.addTo(map);
+		var model;
+		function onEachFeature(feature, layer) {
+			if (feature.geometry.type === 'Point') {
+				var coords = feature.geometry.coordinates;
+				var icon = feature.properties.park === "yes" ? parkIcon : playgroundIcon;
+				var marker = L.marker([coords[1], coords[0]], {icon: icon});
+				marker.bindPopup(generatePopup(feature));
+				marker.addTo(map);
+			}
 		}
 
-	  var points = omnivore.topojson('data/results.topojson')
-			.on('ready', function() {
-					points.eachLayer(eachLayer);
+		function jsonp(data) {
+            model = data.model;
+            L.geoJSON(data.playgrounds, {onEachFeature: onEachFeature});
+		}
+
+		function generatePopup(playground) {
+			var popupContent = `<h4>${playground.properties.name}</h4><table class="marker-table">`;
+			model.forEach(function(property) {
+				popupContent += `<tr><td>${getValue(playground, property.name)}</td><th>${property.label}</th></tr>`;
 			});
+			var params = getParams(playground);
+			var url = "https://script.google.com/macros/s/AKfycbyz8kOjdRITW_3P15bI6VS7IclN_ik5u4-_Ntl2uLdT_zXeCwmB/exec?"+params;
+			popupContent += `</table><br><a href="${url}" target="_blank">עדכון</a>`;
+			return popupContent;
+		}
+
+		function getParams(playground) {
+			var params = 'id=' + playground.properties.id + '&name='+playground.properties.name;
+			Object.keys(playground.properties).forEach(function(prop) {
+				var propertyArr = model.filter(function(modelprop) {return modelprop.name === prop;});
+				if (propertyArr.length > 0) {
+					var value = playground.properties[prop];
+					if (value) {
+						params += '&' + encodeURIComponent(prop) + '=' + encodeURIComponent(value);
+					}
+				}
+			});
+			return params;
+		}
+
+		function getValue(playground, propertyName) {
+			var value = playground.properties[propertyName];
+			if (value) {
+				var icon = getValueIcon(propertyName, value);
+				if (icon) icon += ' ';
+				return icon + value;
+			}
+			return '<i>אין מידע</i>';
+		}
+
+		function getValueIcon(propertyName, value) {
+			var propertyArr = model.filter(function(prop) {return prop.name === propertyName;});
+			if (propertyArr.length > 0) {
+				var property = propertyArr[0];
+				if (property.icons && property.values) {
+					var index = property.values.split(',').indexOf(value);
+					var valueIcons = property.icons.split(',');
+					if (index < valueIcons.length) {
+						return valueIcons[index];
+					}
+				}
+			}
+			return '';
+		}
 
 	</script>
-
-	</body>
+	<script src="https://playgrounds-f2f0d.firebaseio.com/public.json?callback=jsonp"></script>
+</body>
 </html>
