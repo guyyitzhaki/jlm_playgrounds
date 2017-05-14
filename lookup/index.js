@@ -263,8 +263,15 @@ function cleanAddressStage6(addr) {
 function aggregateFormResponses(callback) {
     _.each(playgrounds, playground => {
         let responses = formResponsesById[playground.id];
-        if (!responses) return;
+        if (!responses || responses.length === 0) return;
         let lastResponse = responses.pop();
+
+        if (!lastResponse) {
+            console.log('OH NO, WHAT?!');
+            console.log(playground);
+            console.log(responses);
+        }
+
         for (let column of formColumns) {
             playground[column] = lastResponse[column];
         }
@@ -296,6 +303,8 @@ function start() {
     });
 
 }
+
+//start();
 
 
 module.exports = start;
