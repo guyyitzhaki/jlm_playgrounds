@@ -1,7 +1,7 @@
 {
   "name": "jlm-playgrounds-server",
   "version": "0.2.6",
-  "description": "updates and merges user responses with the playground database",
+  "description": "Updates and merges user responses with the playground database",
   "engines": {
     "node": "6.10.2"
   },
@@ -10,7 +10,14 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "express": "4.15.2"
+    "async": "^2.4.0",
+    "express": "4.15.2",
+    "firebase-admin": "^4.2.1",
+    "geojson": "^0.4.1",
+    "google-spreadsheet": "^2.0.3",
+    "lodash": "^4.17.4",
+    "nconf": "^0.8.4",
+    "node-geocoder": "^3.16.0"
   },
   "repository": {
     "type": "git",
