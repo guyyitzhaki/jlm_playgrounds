@@ -55,7 +55,7 @@ function loadPlaygrounds(callback) {
             });
         },
         function loadRows(step) {
-            worksheet.getRows({offset: 1, limit: 6}, (err, rows) => {
+            worksheet.getRows({offset: 1}, (err, rows) => {
                 console.log(`Read ${rows.length} playgrounds rows`);
                 rows = _.filter(rows, row => row['addressdescription'].length > 0);
                 console.log(`${rows.length} non empty rows`);
