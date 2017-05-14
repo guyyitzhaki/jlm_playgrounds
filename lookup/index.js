@@ -32,6 +32,7 @@ var failureCache = [];
 var formResponsesById = {};
 var formColumns = [];
 var model = [];
+var force = false;
 
 function loadPlaygrounds(callback) {
     async.series([
@@ -129,13 +130,18 @@ function lookup(cleaner, callback, lookupAll) {
             step();
             return;
         }
-        if (lookupAll || cleanAddress != playground.addressdescription) {    
+        if (!force && playground.lastsearchedaddress === playground.addressdescription) {
+            step();
+            return;
+        }
+        if (lookupAll || cleanAddress != playground.addressdescription) {
             geo.geocode(cleanAddress + ' ' + config.city, (err, res) => {
                 if (err) {
                     console.log(`error looking up: ${err}`);
                     step();
                     return;
                 }
+                playground.attempted = true;
                 if (res && res.length > 0) {
                     var geocode = res[0];
                     if (geocode.extra && geocode.extra.googlePlaceId && config.filteredPlaceIds.indexOf(geocode.extra.googlePlaceId) > -1) {
@@ -155,8 +161,8 @@ function lookup(cleaner, callback, lookupAll) {
                     playground.address = geocode.formattedAddress;
                     playground.locatedaddress = cleanAddress;
                     newlyGeocoded+=1;
-                    //console.log(`${playground.name}: ${playground.locatedaddress}`);
-                    playground.save(step);   
+                    playground.lastsearchedaddress = playground.addressdescription;
+                    playground.save(step);
                 }
                 else {
                     failureCache.push(cleanAddress);
@@ -257,13 +263,6 @@ function aggregateFormResponses(callback) {
         let responses = formResponsesById[playground.id];
         if (!responses || responses.length === 0) return;
         let lastResponse = responses.pop();
-
-        if (!lastResponse) {
-            console.log('OH NO, WHAT?!');
-            console.log(playground);
-            console.log(responses);
-        }
-
         for (let column of formColumns) {
             playground[column] = lastResponse[column];
         }
@@ -280,7 +279,8 @@ function saveFailedAddresses(callback) {
     callback();
 }
 
-function start() {
+function start(f) {
+    force = f;
     return new Promise((resolve, reject) => {
         async.series([loadPlaygrounds,
             lookupAddresses1, report,
@@ -291,7 +291,10 @@ function start() {
             lookupAddresses6, report,
             saveFailedAddresses,
             aggregateFormResponses,
-            exportGeoJSON, () => resolve()]);
+            exportGeoJSON, () => {
+                force = false;
+                resolve();
+            }]);
     });
 
 }
