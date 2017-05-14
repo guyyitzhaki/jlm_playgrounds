@@ -74,7 +74,7 @@ function loadPlaygrounds(callback) {
                         formResponsesById[row.id] = [ row ];
                     }
                 });
-                formColumns = Object.keys(rows[0]).filter(v => ["_xml", "id", "app:edited", "_links", "save", "del", "timestamp"].indexOf(v) === -1);
+                formColumns = rows[0] ? Object.keys(rows[0]).filter(v => ["_xml", "id", "app:edited", "_links", "save", "del", "timestamp"].indexOf(v) === -1) : [];
                 step();
             });
         },
