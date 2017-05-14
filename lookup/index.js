@@ -12,11 +12,6 @@ const firebaseConfig = nconf.argv().env()
     .file(`${__dirname}/firebase.credentials.json`)
     .get();
 
-let app = firebase.initializeApp({
-    credential: firebase.credential.cert(firebaseConfig),
-    databaseURL: 'https://playgrounds-f2f0d.firebaseio.com'
-});
-
 // spreadsheet key is the long id in the sheets URL 
 var doc = new GoogleSpreadsheet('1lxfgJTb25hCSATgFzpSYR5pXBhuaevs6nTR0PCyBymk');
 var worksheet;
@@ -192,15 +187,12 @@ function report(callback) {
 function exportGeoJSON(callback) {
     var geoCoded = _.filter(playgrounds, playground => playground.long);
     var json = geoJSON.parse(geoCoded, {Point: ['lat', 'long'], include:['id', 'name', 'neighborhood', 'long', 'lat', 'address', 'addressdescription', 'park', 'playground'].concat(formColumns)});
-    var filename = 'playgrounds.geo.json';
-    console.log(`writing file... ${filename}`);
-    fs.writeFileSync(filename, JSON.stringify(json));
-    console.log(`writing model file...`);
-    fs.writeFileSync('model.json', JSON.stringify(model));
-    console.log('done!');
 
     console.log('Writing to firebase...');
-
+    let app = firebase.initializeApp({
+        credential: firebase.credential.cert(firebaseConfig),
+        databaseURL: 'https://playgrounds-f2f0d.firebaseio.com'
+    });
     Promise.all([
         firebase.database(app).ref('/public/playgrounds').set(JSON.parse(JSON.stringify(json))),
         firebase.database(app).ref('/public/model').set(JSON.parse(JSON.stringify(model)))
@@ -303,9 +295,6 @@ function start() {
     });
 
 }
-
-//start();
-
 
 module.exports = start;
 
