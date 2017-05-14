@@ -1,0 +1,25 @@
+{
+  "name": "jlm-playgrounds-server",
+  "version": "0.2.6",
+  "description": "updates and merges user responses with the playground database",
+  "engines": {
+    "node": "6.10.2"
+  },
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "4.15.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/guyyitzhaki/jlm_playgrounds"
+  },
+  "keywords": [
+    "node",
+    "heroku",
+    "express"
+  ],
+  "license": "MIT"
+}
