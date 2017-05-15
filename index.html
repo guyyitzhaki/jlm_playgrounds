@@ -8,8 +8,9 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 
  	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
  	<script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-search@2.7.2/dist/leaflet-search.min.js"></script>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet-search@2.7.2/dist/leaflet-search.min.css" />
 	<script src="Leaflet.MakiMarkers.js"></script>
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 	<link rel="stylesheet" type="text/css" href="style.css" />
@@ -55,19 +56,33 @@
         lc.start();
 
 		var model;
-		function onEachFeature(feature, layer) {
+		function onEachFeature(feature, marker) {
 			if (feature.geometry.type === 'Point') {
-				var coords = feature.geometry.coordinates;
 				var icon = feature.properties.park === "yes" ? parkIcon : playgroundIcon;
-				var marker = L.marker([coords[1], coords[0]], {icon: icon});
+				marker.setIcon(icon);
 				marker.bindPopup(generatePopup(feature));
-				marker.addTo(map);
 			}
 		}
 
 		function jsonp(data) {
             model = data.model;
-            L.geoJSON(data.playgrounds, {onEachFeature: onEachFeature});
+			var markersLayer = L.geoJSON(data.playgrounds, {onEachFeature: onEachFeature});
+			addSearchControl(markersLayer);
+		}
+
+		function addSearchControl(searchLayer) {
+			var controlSearch = new L.Control.Search({
+				position:'topleft',
+				propertyName: 'name',
+				layer: searchLayer,
+				initial: false,
+				zoom: 15,
+				marker: false
+			});
+			controlSearch.on('search:locationfound', function(e) {
+				e.layer.openPopup();
+			});
+			map.addControl(controlSearch);
 		}
 
 		function generatePopup(playground) {
