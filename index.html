@@ -13,6 +13,10 @@
 	<script src="Leaflet.MakiMarkers.js"></script>
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 	<link rel="stylesheet" type="text/css" href="style.css" />
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+	<link rel="stylesheet" href="https://domoritz.github.io/leaflet-locatecontrol/dist/L.Control.Locate.min.css" />
+
+	<script src="https://domoritz.github.io/leaflet-locatecontrol/dist/L.Control.Locate.min.js" charset="utf-8"></script>
 </head>
 <body>
 	<div id="map"></div>
@@ -26,7 +30,6 @@
 		var parkIcon = L.MakiMarkers.icon({icon: "park", color: "#85AFDF", size: "m"});
 
 		var map = L.map('map', { scrollWheelZoom: true, maxBounds: MAP_BOUNDS}).setView(MAP_CENTER, DEFAULT_ZOOM);
-		map.locate({setView : true, maxZoom: 15});
 		// tile_url = 'http://{s}.tiles.mapbox.com/v3/niryariv.map-n3zuwkkz/{z}/{x}/{y}.png';
 		var tile_url = "https://niryariv.github.io/israel_tiles/{z}/{x}/{y}.png";
 		L.tileLayer(tile_url, {
@@ -41,6 +44,15 @@
 			return this._div;
 		};
 		info.addTo(map);
+
+		// add user location control
+        let lc = L.control.locate({
+			flyTo: true,
+			locateOptions: {maxZoom: 16},
+			strings: {title: "איפה אני נמצא"}
+        }).addTo(map);
+        // zoom to user location when loading map
+        lc.start();
 
 		var model;
 		function onEachFeature(feature, layer) {
