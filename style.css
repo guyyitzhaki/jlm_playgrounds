@@ -41,6 +41,7 @@ html, body, #map {
     padding: 5px 10px;
     white-space: nowrap;
     border: 1px solid #eee;
+    text-align: right;
 }
 
 .marker-table td {

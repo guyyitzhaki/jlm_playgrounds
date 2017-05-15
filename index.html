@@ -28,7 +28,9 @@
 		var DEFAULT_ZOOM = 13;
 		L.MakiMarkers.accessToken = "pk.eyJ1IjoibmlyeWFyaXYiLCJhIjoiQjdJeWdqZyJ9.pZOwn6stABGoptmp0DH1wg";
 		var playgroundIcon = L.MakiMarkers.icon({icon: "playground", color: "#85AFDF", size: "m"});
+        var playgroundNoInfoIcon = L.MakiMarkers.icon({icon: "playground", color: "#BF5252", size: "m"});
 		var parkIcon = L.MakiMarkers.icon({icon: "park", color: "#85AFDF", size: "m"});
+        var parkNoInfoIcon = L.MakiMarkers.icon({icon: "park", color: "#BF5252", size: "m"});
 
 		var map = L.map('map', { scrollWheelZoom: true, maxBounds: MAP_BOUNDS}).setView(MAP_CENTER, DEFAULT_ZOOM);
 		// tile_url = 'http://{s}.tiles.mapbox.com/v3/niryariv.map-n3zuwkkz/{z}/{x}/{y}.png';
@@ -58,9 +60,11 @@
 		var model;
 		function onEachFeature(feature, marker) {
 			if (feature.geometry.type === 'Point') {
-				var icon = feature.properties.park === "yes" ? parkIcon : playgroundIcon;
+                var noInfo = !feature.properties.age;
+				var park = feature.properties.park === "yes";
+                var icon = park ? (noInfo ? parkNoInfoIcon : parkIcon) : (noInfo ? playgroundNoInfoIcon : playgroundIcon);
 				marker.setIcon(icon);
-				marker.bindPopup(generatePopup(feature));
+				marker.bindPopup(generatePopup(feature, noInfo));
 			}
 		}
 
@@ -85,11 +89,11 @@
 			map.addControl(controlSearch);
 		}
 
-		function generatePopup(playground) {
+		function generatePopup(playground, noInfo) {
 			var popupContent = `<h4>${playground.properties.name}</h4><table class="marker-table">`;
 			popupContent += `<tr><td>${getValue(playground, 'addressdescription')}</td><th>מיקום</th></tr>`;
 			model.forEach(function(property) {
-				popupContent += `<tr><td>${getValue(playground, property.name)}</td><th>${property.label}</th></tr>`;
+				popupContent += `<tr><td>${getValue(playground, property.name, noInfo)}</td><th>${property.label}</th></tr>`;
 			});
 			var params = getParams(playground);
 			var url = "https://script.google.com/macros/s/AKfycbyz8kOjdRITW_3P15bI6VS7IclN_ik5u4-_Ntl2uLdT_zXeCwmB/exec?"+params;
@@ -111,14 +115,14 @@
 			return params;
 		}
 
-		function getValue(playground, propertyName) {
+		function getValue(playground, propertyName, noInfo) {
 			var value = playground.properties[propertyName];
 			if (value) {
 				var icon = getValueIcon(propertyName, value);
 				if (icon) icon += ' ';
 				return icon + value;
 			}
-			return '<i>אין מידע</i>';
+			return noInfo ? '<i>אין מידע</i>' : '';
 		}
 
 		function getValueIcon(propertyName, value) {
