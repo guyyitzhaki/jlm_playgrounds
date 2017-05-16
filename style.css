@@ -7,6 +7,34 @@ body{
     background-color: #fff;
 }
 
+.app-header {
+    position: fixed;
+    z-index: 1000;
+    width: 420px;
+    height: 60px;
+    background: #f9f9f9;
+    box-shadow: 0 4px 4px rgba(0,0,0,0.2);
+    border-radius: 0 0 0 80px;
+    right: 0;
+    top: 0;
+}
+
+.app-header .app-title {
+    margin: 0;
+    line-height: 60px;
+    color: #4190bf;
+    padding: 0 20px;
+}
+
+/*#map {
+   height: calc(100% - 61px);
+    position: absolute !important;
+    left: 0;
+    right: 0;
+    top: 60px;
+    width: 100%;
+}*/
+
 html, body, #map {
         height: 100%;
     }

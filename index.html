@@ -20,6 +20,7 @@
 	<script src="https://domoritz.github.io/leaflet-locatecontrol/dist/L.Control.Locate.min.js" charset="utf-8"></script>
 </head>
 <body>
+    <div class="app-header" dir="rtl"><h2 class="app-title">גני משחקים בירושלים</h2></div>
 	<div id="map"></div>
 	<script type="text/javascript">
 
@@ -41,12 +42,12 @@
 		}).addTo(map);
 
 		var info = L.control();
-		info.onAdd = function (map) {
+		/*info.onAdd = function (map) {
 			this._div = L.DomUtil.create('div', 'info');
 			this._div.innerHTML = '<h4>גני משחקים בירושלים</h4>';
 			return this._div;
 		};
-		info.addTo(map);
+		info.addTo(map);*/
 
 		// add user location control
         let lc = L.control.locate({
