@@ -15,6 +15,7 @@
     "firebase-admin": "^4.2.1",
     "geojson": "^0.4.1",
     "google-spreadsheet": "^2.0.3",
+    "leaflet.locatecontrol": "^0.60.0",
     "lodash": "^4.17.4",
     "nconf": "^0.8.4",
     "node-geocoder": "^3.16.0"
