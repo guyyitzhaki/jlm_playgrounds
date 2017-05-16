@@ -8,11 +8,16 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 
  	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
  	<script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-search@2.7.2/dist/leaflet-search.min.js"></script>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet-search@2.7.2/dist/leaflet-search.min.css" />
 	<script src="Leaflet.MakiMarkers.js"></script>
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 	<link rel="stylesheet" type="text/css" href="style.css" />
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+	<link rel="stylesheet" href="https://domoritz.github.io/leaflet-locatecontrol/dist/L.Control.Locate.min.css" />
+
+	<script src="https://domoritz.github.io/leaflet-locatecontrol/dist/L.Control.Locate.min.js" charset="utf-8"></script>
 </head>
 <body>
 	<div id="map"></div>
@@ -22,11 +27,12 @@
 		var MAP_BOUNDS = [L.latLng(31.89, 35.14), L.latLng(31.71, 35.27)];
 		var DEFAULT_ZOOM = 13;
 		L.MakiMarkers.accessToken = "pk.eyJ1IjoibmlyeWFyaXYiLCJhIjoiQjdJeWdqZyJ9.pZOwn6stABGoptmp0DH1wg";
-		var playgroundIcon = L.MakiMarkers.icon({icon: "playground", color: "#85AFDF", size: "m"});
-		var parkIcon = L.MakiMarkers.icon({icon: "park", color: "#85AFDF", size: "m"});
+		var playgroundIcon = L.MakiMarkers.icon({icon: "playground", color: "#a82ac7", size: "m"});
+        var playgroundNoInfoIcon = L.MakiMarkers.icon({icon: "playground", color: "#9494a0", size: "m"});
+		var parkIcon = L.MakiMarkers.icon({icon: "park", color: "#3c9a3f", size: "m"});
+        var parkNoInfoIcon = L.MakiMarkers.icon({icon: "park", color: "#9494a0", size: "m"});
 
 		var map = L.map('map', { scrollWheelZoom: true, maxBounds: MAP_BOUNDS}).setView(MAP_CENTER, DEFAULT_ZOOM);
-		map.locate({setView : true, maxZoom: 15});
 		// tile_url = 'http://{s}.tiles.mapbox.com/v3/niryariv.map-n3zuwkkz/{z}/{x}/{y}.png';
 		var tile_url = "https://niryariv.github.io/israel_tiles/{z}/{x}/{y}.png";
 		L.tileLayer(tile_url, {
@@ -42,27 +48,52 @@
 		};
 		info.addTo(map);
 
+		// add user location control
+        let lc = L.control.locate({
+			flyTo: true,
+			locateOptions: {maxZoom: 16},
+			strings: {title: "איפה אני נמצא"}
+        }).addTo(map);
+        // zoom to user location when loading map
+        lc.start();
+
 		var model;
-		function onEachFeature(feature, layer) {
+		function onEachFeature(feature, marker) {
 			if (feature.geometry.type === 'Point') {
-				var coords = feature.geometry.coordinates;
-				var icon = feature.properties.park === "yes" ? parkIcon : playgroundIcon;
-				var marker = L.marker([coords[1], coords[0]], {icon: icon});
-				marker.bindPopup(generatePopup(feature));
-				marker.addTo(map);
+                var noInfo = !feature.properties.age;
+				var park = feature.properties.park === "yes";
+                var icon = park ? (noInfo ? parkNoInfoIcon : parkIcon) : (noInfo ? playgroundNoInfoIcon : playgroundIcon);
+				marker.setIcon(icon);
+				marker.bindPopup(generatePopup(feature, noInfo));
 			}
 		}
 
 		function jsonp(data) {
             model = data.model;
-            L.geoJSON(data.playgrounds, {onEachFeature: onEachFeature});
+			var markersLayer = L.geoJSON(data.playgrounds, {onEachFeature: onEachFeature});
+			addSearchControl(markersLayer);
 		}
 
-		function generatePopup(playground) {
+		function addSearchControl(searchLayer) {
+			var controlSearch = new L.Control.Search({
+				position:'topleft',
+				propertyName: 'name',
+				layer: searchLayer,
+				initial: false,
+				zoom: 15,
+				marker: false
+			});
+			controlSearch.on('search:locationfound', function(e) {
+				e.layer.openPopup();
+			});
+			map.addControl(controlSearch);
+		}
+
+		function generatePopup(playground, noInfo) {
 			var popupContent = `<h4>${playground.properties.name}</h4><table class="marker-table">`;
 			popupContent += `<tr><td>${getValue(playground, 'addressdescription')}</td><th>מיקום</th></tr>`;
 			model.forEach(function(property) {
-				popupContent += `<tr><td>${getValue(playground, property.name)}</td><th>${property.label}</th></tr>`;
+				popupContent += `<tr><td>${getValue(playground, property.name, noInfo)}</td><th>${property.label}</th></tr>`;
 			});
 			var params = getParams(playground);
 			var url = "https://script.google.com/macros/s/AKfycbyz8kOjdRITW_3P15bI6VS7IclN_ik5u4-_Ntl2uLdT_zXeCwmB/exec?"+params;
@@ -84,14 +115,14 @@
 			return params;
 		}
 
-		function getValue(playground, propertyName) {
+		function getValue(playground, propertyName, noInfo) {
 			var value = playground.properties[propertyName];
 			if (value) {
 				var icon = getValueIcon(propertyName, value);
 				if (icon) icon += ' ';
 				return icon + value;
 			}
-			return '<i>אין מידע</i>';
+			return noInfo ? '<i>אין מידע</i>' : '';
 		}
 
 		function getValueIcon(propertyName, value) {
