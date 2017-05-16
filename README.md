@@ -1,2 +1,2 @@
 # jlm_playgrounds
-Latest version deployed on https://guyyitzhaki.github.io/jlm_playgrounds/
+Latest version deployed on https://play-jlm.github.io/jlm_playgrounds/
