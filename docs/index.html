@@ -66,11 +66,14 @@
 		var model;
 		function onEachFeature(feature, marker) {
 			if (feature.geometry.type === 'Point') {
-                var noInfo = !feature.properties.age;
+                var hasInfo = false;
+                model.forEach(function(property) {
+				    hasInfo = hasInfo || feature.properties[property.name];
+			    });
 				var park = feature.properties.park === "yes";
-                var icon = park ? (noInfo ? parkNoInfoIcon : parkIcon) : (noInfo ? playgroundNoInfoIcon : playgroundIcon);
+                var icon = park ? (hasInfo ? parkIcon : parkNoInfoIcon) : (hasInfo ? playgroundIcon : playgroundNoInfoIcon);
 				marker.setIcon(icon);
-				marker.bindPopup(generatePopup(feature, noInfo));
+				marker.bindPopup(generatePopup(feature, hasInfo));
 			}
 		}
 
@@ -95,11 +98,11 @@
 			map.addControl(controlSearch);
 		}
 
-		function generatePopup(playground, noInfo) {
+		function generatePopup(playground, hasInfo) {
 			var popupContent = `<h4>${playground.properties.name}</h4><table class="marker-table">`;
 			popupContent += `<tr><td>${getValue(playground, 'addressdescription')}</td><th>מיקום</th></tr>`;
 			model.forEach(function(property) {
-				popupContent += `<tr><td>${getValue(playground, property.name, noInfo)}</td><th>${property.label}</th></tr>`;
+				popupContent += `<tr><td>${getValue(playground, property.name, hasInfo)}</td><th>${property.label}</th></tr>`;
 			});
 			var params = getParams(playground);
 			var url = "https://script.google.com/macros/s/AKfycbyz8kOjdRITW_3P15bI6VS7IclN_ik5u4-_Ntl2uLdT_zXeCwmB/exec?"+params;
@@ -121,14 +124,14 @@
 			return params;
 		}
 
-		function getValue(playground, propertyName, noInfo) {
+		function getValue(playground, propertyName, hasInfo) {
 			var value = playground.properties[propertyName];
 			if (value) {
 				var icon = getValueIcon(propertyName, value);
 				if (icon) icon += ' ';
 				return icon + value;
 			}
-			return noInfo ? '<i>אין מידע</i>' : '';
+			return hasInfo ? '' : '<i>אין מידע</i>';
 		}
 
 		function getValueIcon(propertyName, value) {
