@@ -3,7 +3,7 @@
   "version": "0.2.6",
   "description": "Updates and merges user responses with the playground database",
   "engines": {
-    "node": "6.11.1"
+    "node": "6.10.2"
   },
   "main": "index.js",
   "scripts": {
